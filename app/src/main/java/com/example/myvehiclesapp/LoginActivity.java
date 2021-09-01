@@ -65,7 +65,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void MapsActivityIntent() {
-        Intent startIntent = new Intent(this,StartActivity.class);
+        Intent startIntent = new Intent(this,DashActivity.class);
         startActivity(startIntent);
     }
 

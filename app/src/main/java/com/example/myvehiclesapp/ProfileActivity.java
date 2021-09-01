@@ -43,8 +43,8 @@ public class ProfileActivity extends AppCompatActivity {
                 String phoneNUmberText = phoneNUmber.getText().toString();
 
                 HashMap<String,String> main = new HashMap<>();
-                main.put("Name",userName);
-                main.put("PhoneNumber",phoneNUmberText);
+                main.put("name",userName);
+                main.put("carnum",phoneNUmberText);
 
                 String uid = mAuth.getCurrentUser().getUid();
 
@@ -61,7 +61,7 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void MapsActivityIntent() {
-        Intent mapsIntent = new Intent(this, StartActivity.class);
+        Intent mapsIntent = new Intent(this, DashActivity.class);
         startActivity(mapsIntent);
     }
 

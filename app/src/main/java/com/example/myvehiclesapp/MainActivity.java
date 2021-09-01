@@ -7,10 +7,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.WindowManager;
 
-import com.example.myvehiclesapp.LoginActivity;
-import com.example.myvehiclesapp.MapsActivity;
-import com.example.myvehiclesapp.R;
-import com.example.myvehiclesapp.RegisterActivity;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
@@ -33,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(registerIntent);
                     finish();
                 } else {
-                    Intent regisIntent = new Intent(MainActivity.this, StartActivity.class);
+                    Intent regisIntent = new Intent(MainActivity.this, DashActivity.class);
                     startActivity(regisIntent);
                     finish();
                 }

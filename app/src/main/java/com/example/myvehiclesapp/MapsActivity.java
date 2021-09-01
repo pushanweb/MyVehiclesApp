@@ -2,34 +2,44 @@ package com.example.myvehiclesapp;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.util.Log;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.myvehiclesapp.databinding.ActivityMapsBinding;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 import org.jetbrains.annotations.NotNull;
+
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
-    String name ;
     String latitude , longitude;
+    Marker currentLocationMarker;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +52,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+
+
     }
 
     /**
@@ -57,46 +70,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
 
 
         DatabaseReference locationRoot = FirebaseDatabase.getInstance().getReference().child("Location");
-        DatabaseReference userRoot = FirebaseDatabase.getInstance().getReference().child("Users");
 
         locationRoot.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull @NotNull DataSnapshot snapshot, @Nullable @org.jetbrains.annotations.Nullable String previousChildName) {
                 String uid = snapshot.getKey();
-                Toast.makeText(MapsActivity.this, uid, Toast.LENGTH_SHORT).show();
                 latitude = snapshot.child("Latitude").getValue().toString();
-                longitude=snapshot.child("Longitude").getValue().toString();
+                longitude = snapshot.child("Longitude").getValue().toString();
 
-                userRoot.child(uid).addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
-                        name = snapshot.child("Name").getValue().toString();
-                        Log.d("Name111",name);
-
-                        fnMakeMrk(latitude , longitude, name);
-
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull @NotNull DatabaseError error) {
-
-                    }
-                });
+                LatLng mypos = new LatLng(Double.parseDouble(latitude), Double.parseDouble(longitude));
+                currentLocationMarker = mMap.addMarker(new MarkerOptions().position(mypos).title(uid).icon(bitmapDescriptorFromVector(getApplicationContext(),R.drawable.ic_baseline_directions_car_24)));
+                if(uid.equals(FirebaseAuth.getInstance().getUid())){
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mypos,17));
+                }
 
             }
 
             @Override
             public void onChildChanged(@NonNull @NotNull DataSnapshot snapshot, @Nullable @org.jetbrains.annotations.Nullable String previousChildName) {
+                currentLocationMarker.remove();
+                String uid = snapshot.getKey();
+                latitude = snapshot.child("Latitude").getValue().toString();
+                longitude = snapshot.child("Longitude").getValue().toString();
+
+                LatLng mypos = new LatLng(Double.parseDouble(latitude), Double.parseDouble(longitude));
+                currentLocationMarker = mMap.addMarker(new MarkerOptions().position(mypos).title(uid).icon(bitmapDescriptorFromVector(getApplicationContext(),R.drawable.ic_baseline_directions_car_24)));
 
             }
 
             @Override
             public void onChildRemoved(@NonNull @NotNull DataSnapshot snapshot) {
-
+                currentLocationMarker.remove();
             }
 
             @Override
@@ -109,11 +116,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             }
         });
+
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(@NonNull @NotNull Marker marker) {
+                String markertitle = marker.getTitle();
+                Intent intent=new Intent(MapsActivity.this,DetailsActivity.class);
+                intent.putExtra("title",markertitle);
+                startActivity(intent);
+                return false;
+            }
+        });
+
     }
 
-    private void fnMakeMrk(String latitude, String longitude, String nameOf) {
-        LatLng mypos = new LatLng(Double.parseDouble(latitude), Double.parseDouble(longitude));
-        mMap.addMarker(new MarkerOptions().position(mypos).title(nameOf));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mypos,17));
+
+    private BitmapDescriptor bitmapDescriptorFromVector(Context context,int vectorResid){
+        Drawable vectorDrawable= ContextCompat.getDrawable(context,vectorResid);
+        vectorDrawable.setBounds(0,0,vectorDrawable.getIntrinsicWidth(),vectorDrawable.getIntrinsicWidth());
+        Bitmap bitmap=Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(),vectorDrawable.getIntrinsicHeight(),Bitmap.Config.ARGB_8888);
+        Canvas canvas=new Canvas(bitmap);
+        vectorDrawable.draw(canvas);
+        return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
+
 }
